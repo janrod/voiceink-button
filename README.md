@@ -67,35 +67,87 @@ as the remote wakes.
 
 ## Set up VoiceInk
 
-1. **Shortcut.** In VoiceInk's settings, set the **Primary Shortcut** to **⌥ /** (Option + slash)
-   and its mode to **Toggle**. That is the key the dongle presses. To use another one, change
-   `DICTATE_MODIFIERS` and `DICTATE_KEY` in
-   [firmware/common/vb_keys.h](firmware/common/vb_keys.h) and reflash both devices. VoiceInk must
-   use toggle mode, because the dongle taps the shortcut; it doesn't hold it down.
-2. **Microphone.** In VoiceInk's audio input settings, choose **Custom Device** → **VoiceInk Button
-   Mic**. Or choose **Prioritized** with VoiceInk Button Mic first and your Mac's mic second. Either
-   way, VoiceInk falls back to another mic while the remote is asleep. The remote has to be awake
-   for VoiceInk Button Mic to appear in the list.
-3. **Keyboard Setup Assistant.** The first time the dongle is plugged in, macOS may ask you to
-   identify the keyboard. Close the window; nothing needs to be set up.
+### 1. Choose how the button starts VoiceInk
 
-### If a press types ÷ instead of starting VoiceInk
+The yellow button can start and stop VoiceInk in two ways. Option 1 is the tested one. Option 2 is
+an experiment for people who run into the secure input problem described under
+[Known caveats](#known-caveats).
 
-⌥/ types ÷ when VoiceInk didn't catch the shortcut. Usually another app holds macOS *secure input*:
-a focused password field in a browser, a password manager, or some terminals. While secure input is
-on, no app can catch global shortcuts, and the same happens with your real keyboard. To find which
-app holds it:
+#### Option 1: Press your VoiceInk shortcut
+
+The dongle presses the same shortcut you would press on your keyboard, so it has to know yours.
+
+1. In VoiceInk's settings, find the shortcut you use to start recording and set its mode to
+   **Toggle**. The dongle taps the shortcut; it doesn't hold it down.
+2. Put the same shortcut in [firmware/common/vb_keys.h](firmware/common/vb_keys.h) before you flash
+   both devices. The values in the file are only the author's own, so replace them. For example,
+   for Control + Option + Space:
+
+   ```c
+   #define DICTATE_MODIFIERS  (VB_MOD_LCTRL | VB_MOD_LALT)
+   #define DICTATE_KEY        VB_KEY_SPACE
+   #define DICTATE_LABEL      "HOTKEY"    // shown on the remote; keep it short
+   ```
+
+   Modifiers and key codes are listed in
+   [firmware/common/vb_protocol.h](firmware/common/vb_protocol.h). Key codes are physical key
+   positions on a US keyboard, so a key may be labelled differently on your layout. Use a shortcut
+   that includes a regular key: modifier-only shortcuts and Fn haven't been tested.
+
+#### Option 2: Run VoiceInk's action through a macOS Shortcut (experimental)
+
+VoiceInk has a *Toggle VoiceInk Recorder* action (VoiceInk 2.13 has it), and a macOS Shortcut can
+run it, so VoiceInk doesn't have to catch a hotkey. The dongle still presses a key, but only to
+launch the Shortcut. **This setup hasn't been tested end to end,** and it isn't known whether it
+gets past secure input.
+
+1. Set the key in [firmware/common/vb_keys.h](firmware/common/vb_keys.h) to one nothing else uses,
+   then flash both devices:
+
+   ```c
+   #define DICTATE_MODIFIERS  0
+   #define DICTATE_KEY        VB_KEY_F18
+   #define DICTATE_LABEL      "F18"
+   ```
+
+2. Build the Shortcut and import it:
+
+   ```sh
+   python3 mac/make_toggle_shortcut.py && open "build/VoiceInk Button Toggle.shortcut"
+   ```
+
+3. In the Shortcuts app, add a keyboard shortcut to **VoiceInk Button Toggle**. When it asks for the
+   keys, press the yellow button.
+
+A version with no keystroke at all is designed but not built: the dongle would signal a helper on
+the Mac over USB serial, and the helper would run the Shortcut. See
+[docs/PRD-mic-presence.md](docs/PRD-mic-presence.md), section 9.
+
+### 2. Choose the microphone
+
+In VoiceInk's audio input settings, choose **Custom Device** → **VoiceInk Button Mic**. Or choose
+**Prioritized** with VoiceInk Button Mic first and your Mac's mic second. Either way, VoiceInk falls
+back to another mic while the remote is asleep. The remote has to be awake for VoiceInk Button Mic
+to appear in the list.
+
+### 3. Dismiss the Keyboard Setup Assistant
+
+The first time the dongle is plugged in, macOS may ask you to identify the keyboard. Close the
+window; nothing needs to be set up.
+
+### Known caveats
+
+**Secure input blocks shortcuts.** While an app holds macOS *secure input*, no app can catch global
+shortcuts, so VoiceInk doesn't start. The same happens with your real keyboard. The usual causes are
+a focused password field in a browser, a password manager, or some terminals. A shortcut that uses
+Option may type a special character into the focused app instead. To find which app holds secure
+input:
 
 ```sh
 ioreg -l -w 0 | grep -o '"kCGSSessionSecureInputPID"=[0-9]*'   # then: ps -p <pid>
 ```
 
 Click out of the password field, or quit the app, and the button works again.
-
-[mac/make_toggle_shortcut.py](mac/make_toggle_shortcut.py) builds a macOS Shortcut that runs
-VoiceInk's *Toggle VoiceInk Recorder* action without a keystroke. It is a starting point for a
-trigger that secure input can't block; see
-[docs/PRD-mic-presence.md](docs/PRD-mic-presence.md), section 9.
 
 ## Build and flash
 
