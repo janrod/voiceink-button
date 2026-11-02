@@ -37,10 +37,28 @@ driver is needed.
 
 - **Wake:** a button, a touch or picking it up. A press on a dark screen only wakes it. Touch and
   pickup can be turned off under Settings; with both off, only the buttons wake it.
-- **Menu:** swipe down from the top. It has **Add dongle**, **Dongles**, **Settings** (wake on
-  pickup, wake on touch, brightness), **Reboot** and **Power off**.
-- **In lists:** tap a row, or move with yellow and blue and hold yellow to choose. To forget a
-  dongle, open **Dongles**, hold the row until it buzzes, then tap it.
+
+**The menu**
+
+Swipe down on the main screen to open the menu. Swipe up or tap outside its buttons to close it. It
+also closes when the screen turns off, or when you press a button; the press still does its usual
+job, so yellow starts dictation.
+
+| Item | What it does |
+|---|---|
+| **Add dongle** | Searches for nearby dongles and lists them with their signal strength, marked *new*, *paired, will replace* (pairing takes it from its current remote) or *already yours*. Tap one to pair it; see [Pair](#pair). |
+| **Dongles** | Lists the dongles the remote remembers, up to 4. Tap one to switch to it. The one in use says *active, linked* or *active, not in range*. To forget a dongle, hold its row until it buzzes, then tap it within 3 s. |
+| **Settings** | **Wake on pickup** and **Wake on touch** turn on or off; both start on. **Brightness** steps through Low, Medium, High and Max; it starts on High. Changes apply at once and are remembered. |
+| **Reboot** | Restarts the remote. Pairings and settings are kept. |
+| **Power off** | Turns the remote off; press its power button to turn it back on. On USB it can't turn off, and shows **ON USB POWER**. |
+
+In **Add dongle**, **Dongles** and **Settings**, the highlighted row sits in the middle of the
+screen:
+
+- **By touch:** tap the highlighted row to choose it. Tap the row above or below, or drag, to move.
+  Tap **Back** (**Cancel** in Add dongle) to return to the menu.
+- **By button:** yellow moves up, blue moves down, holding yellow chooses, and holding blue goes
+  back.
 
 **What the screens say**
 
