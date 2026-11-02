@@ -5,6 +5,13 @@ dictation app. Press a button, speak, press again: VoiceInk transcribes and past
 remote's mic travels with you, so you can dictate from the sofa, standing at a whiteboard, or pacing
 the room.
 
+<p>
+  <img src="assets/remote-dongle-ready.jpg" width="49%" alt="The round remote and the USB dongle side by side, both showing READY in green">
+  <img src="assets/remote-dongle-listening.jpg" width="49%" alt="The round remote and the USB dongle side by side, both showing LISTENING in red">
+</p>
+
+*The remote (left) and the dongle (right): ready, then listening.*
+
 It is two M5Stack devices running this firmware:
 
 - **Remote:** an M5Stack **StopWatch** (ESP32-S3, round touch screen, two buttons, mic, battery).
@@ -167,19 +174,6 @@ on battery and only rises on USB, so plugging in or unplugging doesn't make it j
   once the remote uses it.
 - The pairing keys are stored on the remote without flash encryption. If you lose the remote, hold
   **B** on the dongle for 6 s to make it forget it.
-
-## How it works
-
-Design notes, written before each feature was built:
-
-- [docs/PRD-pairing.md](docs/PRD-pairing.md): pairing, encryption and the radio protocol.
-- [docs/PRD-mic-presence.md](docs/PRD-mic-presence.md): removing the mic while the remote is asleep.
-- [docs/PRD-live-text.md](docs/PRD-live-text.md): a draft for showing VoiceInk's text on the remote.
-  Not built.
-
-The firmware is in [firmware/handheld](firmware/handheld) (remote),
-[firmware/dongle](firmware/dongle), and [firmware/common](firmware/common) (protocol and crypto
-shared by both).
 
 ## License
 
