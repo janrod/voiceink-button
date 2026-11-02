@@ -14,10 +14,11 @@ the room.
 
 It is two M5Stack devices running this firmware:
 
-- **Remote:** an M5Stack **StopWatch** (ESP32-S3, round touch screen, two buttons, mic, battery).
-- **Dongle:** an M5Stack **StickS3**, plugged into the Mac. It shows up as a USB keyboard, which
-  presses VoiceInk's shortcut, and a USB microphone, **VoiceInk Button Mic**, which carries the
-  remote's audio.
+- **Remote:** an M5Stack [**StopWatch**](https://docs.m5stack.com/en/core/StopWatch) (ESP32-S3,
+  round touch screen, two buttons, mic, battery).
+- **Dongle:** an M5Stack [**StickS3**](https://docs.m5stack.com/en/core/StickS3), plugged into the
+  Mac. It shows up as a USB keyboard, which presses VoiceInk's shortcut, and a USB microphone,
+  **VoiceInk Button Mic**, which carries the remote's audio.
 
 The two talk over ESP-NOW, encrypted, after a one-time pairing with a 6-digit code. No Mac app or
 driver is needed.
