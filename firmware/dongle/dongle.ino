@@ -119,6 +119,9 @@ static void draw_status(const char* title, const char* sub);
 // Unplugged: the PM1 reports no valid 5 V input (PWR_SRC bit 0). USB data alone cannot tell, since
 // a pulled cable looks like a sleeping Mac (suspend). Power off after 3 s; plugging it back in
 // turns it on again. A failed register read decides nothing, and a working USB link always wins.
+// After 1.5 s the PONGs tell the handheld to turn off as well; a quick cable swap reaches neither.
+static bool powering_off = false;
+
 static void power_update() {
   static uint32_t last_check = 0, unplugged_since = 0;
   uint32_t now = millis();
@@ -126,13 +129,15 @@ static void power_update() {
   last_check = now;
   uint8_t src;
   if (!M5.Power.M5pm1.readRegister(0x04, &src, 1)) return;
-  if ((src & 0x01) || usb_state == VB_USB_READY) { unplugged_since = 0; return; }
+  if ((src & 0x01) || usb_state == VB_USB_READY) { unplugged_since = 0; powering_off = false; return; }
   if (!unplugged_since) { unplugged_since = now; Serial.printf("power: unplugged (PWR_SRC 0x%02x)\n", src); return; }
+  powering_off = now - unplugged_since >= 1500;
   if (now - unplugged_since < 3000) return;
   draw_status("POWER OFF", "plug into USB to turn on");
   delay(800);
   M5.Power.powerOff();
   unplugged_since = 0;                  // still running: something else powers the board
+  powering_off = false;
 }
 
 // Pick the quietest of 1/6/11 by summed AP signal near each.
@@ -623,7 +628,7 @@ static void on_session_packet(const rx_msg_t& m, uint8_t type) {
     last_ping_ms = remote_seen_ms = millis();
     remote_battery = p->battery;
     remote_flags = p->flags;
-    vb_pong_t pong = { vb_hdr(VB_PKT_PONG), ++tx_ctr, usb_state, rec_state(), {} };
+    vb_pong_t pong = { vb_hdr(VB_PKT_PONG), ++tx_ctr, powering_off ? (uint8_t)VB_USB_POWERING_OFF : usb_state, rec_state(), {} };
     vb_seal(&pong, sizeof(pong), session_key);
     send(rec.mac, &pong, sizeof(pong));
   } else if (type == VB_PKT_KEY && m.len == sizeof(vb_key_t)) {

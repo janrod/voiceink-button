@@ -38,7 +38,8 @@
                                   // (a press that wakes the screen does nothing else)
 
 // Sleep: after this much idle time on battery, the radio turns off and the chip light-sleeps
-// until a button, a touch or a pickup wakes it. Never sleeps on USB power.
+// until a button, a touch or a pickup wakes it. Without a link to the dongle it powers off instead.
+// Neither happens on USB power.
 #define SLEEP_AFTER_MS      20000  // with the screen off; on battery only. Wake + relink takes ~0.5 s
 #define WAKE_LINK_WAIT_MS   2500   // a press right after waking waits this long for the link
 

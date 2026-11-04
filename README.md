@@ -50,7 +50,7 @@ job, so yellow starts dictation.
 | **Dongles** | Lists the dongles the remote remembers, up to 4. Tap one to switch to it. The one in use says *active, linked* or *active, not in range*. To forget a dongle, hold its row until it buzzes, then tap it within 3 s. |
 | **Settings** | **Wake on pickup** and **Wake on touch** turn on or off; both start on. **Brightness** steps through Low, Medium, High and Max; it starts on High. Changes apply at once and are remembered. |
 | **Reboot** | Restarts the remote. Pairings and settings are kept. |
-| **Power off** | Turns the remote off; press its power button to turn it back on. On USB it can't turn off, and shows **ON USB POWER**. |
+| **Power off** | Turns the remote off; press its power button to turn it back on. On USB it can't turn off, and shows **ON USB POWER**. It can also turn off by itself; see **Power** below. |
 
 In **Add dongle**, **Dongles** and **Settings**, the highlighted row sits in the middle of the
 screen:
@@ -74,10 +74,17 @@ screen:
 An awake remote follows VoiceInk. If you start, stop or cancel a recording on the Mac, the remote
 notices, because the dongle sees VoiceInk open or close the mic.
 
-**Power.** On battery, the remote dims after 10 s, then turns off its screen and radio after 20 s.
-The green LED blinks every 2 s while awake and every 5 s while asleep. Waking and relinking takes
-about half a second. On USB the remote never sleeps; only its screen turns off. The dongle turns on when plugged in and off when
-unplugged.
+**Power.** The dongle turns on when plugged in and off when unplugged. On battery, the remote dims
+after 10 s without input. At 20 s it does one of two things:
+
+- **If it can see the dongle, it sleeps:** screen and radio off. The green LED blinks every 2 s while
+  awake and every 5 s while asleep. Waking and relinking takes about half a second.
+- **If it can't, it powers off.** Press its power button to turn it back on.
+
+If you unplug the dongle while the remote is awake, the remote powers off with it. A sleeping remote
+can't hear that, so it sleeps on until something wakes it, then powers off 20 s later. Without a
+dongle, moving the remote doesn't keep it on, so a remote in a bag turns itself off. On USB the
+remote never sleeps or powers off by itself; only its screen turns off.
 
 **When the remote is asleep,** the dongle removes VoiceInk Button Mic from the Mac. Recordings you
 start on the Mac then use the Mac's own mic instead of recording silence. The mic comes back as soon

@@ -652,6 +652,23 @@ static void do_power_off() {
   toast("ON USB POWER", C_AMBER, 2000);
 }
 
+// Power off without being asked: the dongle was unplugged, or the remote went idle without a dongle.
+// A dark screen stays dark. On USB it can't turn off, so it stays on.
+static void auto_power_off(const char* why) {
+  if (M5.Power.getVBUSVoltage() > 4000) return;
+  Serial.printf("power off: %s\n", why);
+  Serial.flush();
+  dictating = false;
+  mic_stop();
+  if (!screen_off) {
+    show_message("POWER OFF", "press the power button to turn on");
+    delay(1500);
+    M5.Display.sleep();
+  }
+  M5.Power.powerOff();
+  if (!screen_off) M5.Display.wakeup();  // still running: something else powers the board
+}
+
 // ---------------------------------------------------------------------------------
 // Sleep: radio off + light sleep until a button or the touch panel pulls its line low, or the
 // accelerometer (polled on a timer) sees the device move. RAM, the canvas and the pairing
@@ -872,7 +889,8 @@ static bool motion_moved(motion_t& m, const float a[3]) {
 static void pickup_update() {
   static motion_t m;
   static uint32_t last_ms = 0;
-  if (!settings.wake_on_pickup || !imu_ok || !(dimmed || screen_off)) {
+  // Without a dongle, movement doesn't count: in a moving bag it would keep the remote from powering off.
+  if (!settings.wake_on_pickup || !imu_ok || !(dimmed || screen_off) || !linked()) {
     if (m.have && m.reads) pk_note("awake: no pickup, %lu reads, max %.3f g", (unsigned long)m.reads, sqrtf(m.max_dev2));
     m.have = false;
     return;
@@ -1000,14 +1018,16 @@ void loop() {
   // Fresh time: the input handlers above may have set last_activity_ms after `now` was taken,
   // and a negative difference would read as a huge idle time (instant dim / sleep).
   now = millis();
-  // An open menu or list doesn't count: left alone, it closes when the screen goes off.
-  bool busy = dictating || mic_on || enter_due_ms || deferred_btn || send_state != SEND_IDLE
+  // An open menu or list doesn't count: left alone, it closes when the screen goes off. Nor does
+  // dictating without a link: nothing reaches the Mac, and it would keep the remote from powering off.
+  bool busy = ((dictating || mic_on) && linked()) || enter_due_ms || deferred_btn || send_state != SEND_IDLE
            || pair_state != PS_NONE;
   if (busy) last_activity_ms = now;
   int32_t idle = (int32_t)(now - last_activity_ms);
+  if (linked() && dongle_usb_state == VB_USB_POWERING_OFF) auto_power_off("dongle unplugged");
   if (!usb_power && screen_off && idle > SLEEP_AFTER_MS) {
-    sleep_now();
-    return;
+    if (!linked()) auto_power_off("no dongle");
+    else { sleep_now(); return; }
   }
   if (!screen_off && idle > SCREEN_OFF_AFTER_MS) {
     M5.Display.sleep();

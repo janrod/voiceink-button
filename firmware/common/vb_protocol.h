@@ -71,7 +71,8 @@ enum vb_pkt_type_t : uint8_t {
 };
 
 // PONG.usb_state
-enum vb_usb_state_t : uint8_t { VB_USB_NONE = 0, VB_USB_READY = 1, VB_USB_SUSPENDED = 2 };
+// POWERING_OFF: the dongle was unplugged and is about to turn off; the handheld turns off too.
+enum vb_usb_state_t : uint8_t { VB_USB_NONE = 0, VB_USB_READY = 1, VB_USB_SUSPENDED = 2, VB_USB_POWERING_OFF = 3 };
 
 // PONG.rec_state: VoiceInk opens its input device exactly while it records, so once VoiceInk
 // uses the dongle's mic, the dongle knows whether it is recording. UNKNOWN until the Mac opens the
