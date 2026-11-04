@@ -31,6 +31,7 @@ static bool imu_ok = false;
 
 static bool menu_dragging = false;
 static bool touch_ignored = false;      // touch that only woke the screen
+static int off_warning_s = 0;           // counting down to power off: seconds left; 0 = not counting
 
 static int battery = -1;
 static bool charging = false;
@@ -193,6 +194,10 @@ static void on_key_result(bool ok, uint8_t key_id) {
 // Linked over radio, but the dongle has no USB connection to the Mac.
 static bool dongle_no_usb() { return linked() && dongle_usb_state == VB_USB_NONE; }
 
+// Paired, but the active dongle can't be seen. Not while unpaired, or while adding a dongle: there,
+// no link is expected.
+static bool dongle_missing() { return store.count && screen != SCR_DISCOVER && !linked(); }
+
 static void not_linked_feedback() {
   VIBRATE(VIB_ERROR);
   toast(store.count ? "NO LINK" : "NO DONGLE", C_AMBER);
@@ -248,7 +253,7 @@ static void deferred_update() {
 }
 
 static void buttons_update() {
-  if (screen_off && (BTN_YELLOW.wasPressed() || BTN_BLUE.wasPressed())) {
+  if ((screen_off || off_warning_s) && (BTN_YELLOW.wasPressed() || BTN_BLUE.wasPressed())) {
     swallow_yellow |= BTN_YELLOW.wasPressed();
     swallow_blue |= BTN_BLUE.wasPressed();
     wake();
@@ -342,7 +347,8 @@ static void touch_update() {
   }
   const auto& t = M5.Touch.getDetail(0);
 
-  if (t.wasPressed()) touch_ignored = (dimmed || screen_off) && !settings.wake_on_touch ? true : wake();
+  if (t.wasPressed() && off_warning_s) { wake(); touch_ignored = true; }   // stay on; it does nothing else
+  else if (t.wasPressed()) touch_ignored = (dimmed || screen_off) && !settings.wake_on_touch ? true : wake();
   if (touch_ignored) { if (!t.isPressed()) touch_ignored = false; return; }
   last_activity_ms = millis();
   if (t.isPressed() && !t.isDragging() && !t.isFlicking() && !menu_dragging && !list_dragging) {
@@ -595,10 +601,29 @@ static void draw_menu() {
   canvas.fillSmoothRoundRect(CX - 30, oy + canvas.height() - 30, 60, 6, 3, C_DIM);  // handle
 }
 
+static void draw_off_warning() {
+  char buf[8];
+  snprintf(buf, sizeof(buf), "%d", off_warning_s);
+  canvas.setTextDatum(middle_center);
+  canvas.setFont(&fonts::FreeSansBold18pt7b);
+  canvas.setTextColor(C_AMBER);
+  canvas.drawString("NO DONGLE", CX, CY - 92);
+  canvas.setFont(&fonts::FreeSans12pt7b);
+  canvas.setTextColor(C_TEXT);
+  canvas.drawString("powering off in", CX, CY - 42);
+  canvas.setFont(&fonts::FreeSansBold24pt7b);
+  canvas.drawString(buf, CX, CY + 12);
+  canvas.setFont(&fonts::FreeSans9pt7b);
+  canvas.setTextColor(C_MUTED);
+  canvas.drawString("touch to stay on", CX, CY + 70);
+}
+
 static void render() {
   uint32_t now = millis();
   canvas.fillScreen(C_BG);
-  if (screen != SCR_MAIN) {
+  if (off_warning_s) {
+    draw_off_warning();
+  } else if (screen != SCR_MAIN) {
     render_screen(now);
   } else {
     bool is_linked = linked();
@@ -889,8 +914,8 @@ static bool motion_moved(motion_t& m, const float a[3]) {
 static void pickup_update() {
   static motion_t m;
   static uint32_t last_ms = 0;
-  // Without a dongle, movement doesn't count: in a moving bag it would keep the remote from powering off.
-  if (!settings.wake_on_pickup || !imu_ok || !(dimmed || screen_off) || !linked()) {
+  // With its dongle missing, movement doesn't count: in a moving bag it would keep the remote from powering off.
+  if (!settings.wake_on_pickup || !imu_ok || !(dimmed || screen_off) || dongle_missing()) {
     if (m.have && m.reads) pk_note("awake: no pickup, %lu reads, max %.3f g", (unsigned long)m.reads, sqrtf(m.max_dev2));
     m.have = false;
     return;
@@ -1024,17 +1049,31 @@ void loop() {
            || pair_state != PS_NONE;
   if (busy) last_activity_ms = now;
   int32_t idle = (int32_t)(now - last_activity_ms);
-  if (linked() && dongle_usb_state == VB_USB_POWERING_OFF) auto_power_off("dongle unplugged");
-  if (!usb_power && screen_off && idle > SLEEP_AFTER_MS) {
-    if (!linked()) auto_power_off("no dongle");
-    else { sleep_now(); return; }
+  // On battery with the dongle missing: full brightness, a countdown, then power off. Otherwise: dim, then sleep.
+  bool no_dongle = !usb_power && dongle_missing();
+  off_warning_s = no_dongle && !screen_off && idle > SLEEP_AFTER_MS - OFF_WARNING_MS
+                ? max((int)((SLEEP_AFTER_MS - idle + 999) / 1000), 1) : 0;
+  if (no_dongle && dimmed && !screen_off) {
+    M5.Display.setBrightness(brightness_active());
+    dimmed = false;
   }
-  if (!screen_off && idle > SCREEN_OFF_AFTER_MS) {
+  if (linked() && dongle_usb_state == VB_USB_POWERING_OFF) auto_power_off("dongle unplugged");
+  if (no_dongle && idle > SLEEP_AFTER_MS) {
+    auto_power_off("no dongle");
+  } else if (!usb_power && screen_off && idle > SLEEP_AFTER_MS) {
+    sleep_now();
+    return;
+  }
+  if (screen == SCR_DISCOVER && idle > SCREEN_OFF_AFTER_MS) {
+    screen_back();                        // lit, with a fresh idle time: going dark here would power off at once
+    menu_target = menu_pos = 0.f;
+    wake();
+  } else if (!screen_off && idle > SCREEN_OFF_AFTER_MS) {
     M5.Display.sleep();
     screen_off = true;
     if (screen != SCR_MAIN) screen_back();
     menu_target = menu_pos = 0.f;         // after screen_back, which reopens the menu
-  } else if (!dimmed && !screen_off && idle > DIM_AFTER_MS) {
+  } else if (!no_dongle && !dimmed && !screen_off && idle > DIM_AFTER_MS) {
     M5.Display.setBrightness(BRIGHTNESS_DIM);
     dimmed = true;
   }

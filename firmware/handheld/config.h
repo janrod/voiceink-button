@@ -41,6 +41,7 @@
 // until a button, a touch or a pickup wakes it. Without a link to the dongle it powers off instead.
 // Neither happens on USB power.
 #define SLEEP_AFTER_MS      20000  // with the screen off; on battery only. Wake + relink takes ~0.5 s
+#define OFF_WARNING_MS       5000  // the end of those 20 s without a link: a countdown to power off
 #define WAKE_LINK_WAIT_MS   2500   // a press right after waking waits this long for the link
 
 // Wake on pickup: in sleep, the accelerometer is read every PICKUP_POLL_MS (about +0.4 mA).
