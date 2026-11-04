@@ -74,8 +74,8 @@ enum vb_pkt_type_t : uint8_t {
 enum vb_usb_state_t : uint8_t { VB_USB_NONE = 0, VB_USB_READY = 1, VB_USB_SUSPENDED = 2 };
 
 // PONG.rec_state: VoiceInk opens its input device exactly while it records, so once VoiceInk
-// uses the dongle's mic, the dongle knows whether it is recording. UNKNOWN until that has been
-// seen to follow a start tap (VoiceInk may be using another mic).
+// uses the dongle's mic, the dongle knows whether it is recording. UNKNOWN until the Mac opens the
+// mic, and again after a start tap that didn't open it (VoiceInk may be using another mic).
 enum vb_rec_state_t : uint8_t { VB_REC_UNKNOWN = 0, VB_REC_IDLE = 1, VB_REC_ON = 2 };
 
 // Handheld status flags (PING.flags)

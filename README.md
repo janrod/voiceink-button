@@ -71,8 +71,8 @@ screen:
 | **SEARCH…** | The dongle can't hear the remote |
 | **NO USB** | The dongle lost the Mac. Press A on the dongle, or blue on the remote, to restart it |
 
-The remote follows VoiceInk. If you stop or cancel a recording on the Mac, the remote notices,
-because the dongle sees VoiceInk close the mic.
+An awake remote follows VoiceInk. If you start, stop or cancel a recording on the Mac, the remote
+notices, because the dongle sees VoiceInk open or close the mic.
 
 **Power.** On battery, the remote dims after 10 s, then turns off its screen and radio after 20 s.
 The green LED blinks every 2 s while awake and every 5 s while asleep. Waking and relinking takes
@@ -166,6 +166,14 @@ ioreg -l -w 0 | grep -o '"kCGSSessionSecureInputPID"=[0-9]*'   # then: ps -p <pi
 ```
 
 Click out of the password field, or quit the app, and the button works again.
+
+**A sleeping remote can't follow the Mac.** Its radio is off, so a recording you start on the Mac
+doesn't wake it. VoiceInk records from another mic instead, because VoiceInk Button Mic is only
+there while the remote is awake.
+
+**Other apps can trigger the remote.** The dongle can't tell who opened VoiceInk Button Mic. If
+another app opens it, such as a video call, the remote shows LISTENING and sends its audio, and its
+buttons can get out of step with VoiceInk until that app lets go. Hold yellow to reset the remote.
 
 ## Build and flash
 

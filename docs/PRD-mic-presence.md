@@ -110,7 +110,9 @@ another mic. Prioritized makes the fallback order explicit.
 
 - R9. `rec_state` keeps coming from `uac_open`. Once the mic has been removed, the dongle reports
   `VB_REC_UNKNOWN` until a start tap shows that VoiceInk records from it again. While the mic was
-  gone, VoiceInk may have been recording from another mic.
+  gone, VoiceInk may have been recording from another mic. (As built: `VB_REC_UNKNOWN` lasts until
+  the Mac opens the mic, with or without a start tap, so a recording started on the Mac reaches an
+  awake StopWatch. Another app opening the mic looks the same.)
 - R10. The USB drop during a switch must not show "NO USB" or "MAC ASLEEP" on either device. The
   dongle knows it caused the drop.
 

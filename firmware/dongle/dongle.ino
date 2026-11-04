@@ -470,19 +470,19 @@ static void tap(uint8_t mods, uint8_t keycode, uint8_t hold_ms) {
   if (mods) { delay(8); r.modifiers = 0; Keyboard.sendReport(&r); }
 }
 
-// VoiceInk's state, read from the mic: trusted once a start tap made VoiceInk open it.
+// VoiceInk's state, read from the mic: trusted once the Mac opens it, with or without a start tap,
+// so a recording started on the Mac reaches the handheld. Another app opening the mic looks the same.
 static bool mic_follows_voiceink = false;
 static uint32_t start_tap_ms = 0;       // start tap still waiting for the mic to open
 
 static uint8_t rec_state() { return !mic_follows_voiceink ? VB_REC_UNKNOWN : uac_open ? VB_REC_ON : VB_REC_IDLE; }
 
 static void voiceink_update() {
-  if (!start_tap_ms) return;
   if (uac_open) {
     if (!mic_follows_voiceink) Serial.println("VoiceInk records from this mic: tracking its state");
     mic_follows_voiceink = true;
     start_tap_ms = 0;
-  } else if (millis() - start_tap_ms > 2000) {   // before the handheld trusts the state (2.5 s)
+  } else if (start_tap_ms && millis() - start_tap_ms > 2000) {   // before the handheld trusts the state (2.5 s)
     if (mic_follows_voiceink) Serial.println("VoiceInk did not open this mic: state unknown");
     mic_follows_voiceink = false;
     start_tap_ms = 0;
